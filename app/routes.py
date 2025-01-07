@@ -10,27 +10,44 @@ def chat_analyze():
     """
     print("POST request received at /chat/analyze")  # Debug log
     try:
+        # Parse JSON request data
         data = request.get_json()
         if not data or "message" not in data:
             return jsonify({"error": "No message provided"}), 400
 
-        # Run Langflow with the provided message
+        # Extract the message
         message = data["message"]
+
+        # Run Langflow with the provided message
         response = run_flow(message)
 
-        # Extract outputs and session_id if available
-        outputs = response.get("outputs", "No outputs available")
+        # Debug log the raw response
+        print(f"Raw Response from Langflow: {response}")
+
+        # Extract outputs and session_id
+        outputs = response.get("outputs", [])
         session_id = response.get("session_id", "No session ID available")
 
-        print(f"Langflow Outputs: {outputs}")  # Debug log
-        print(f"Session ID: {session_id}")    # Debug log
+        # Simplify outputs for readability
+        if isinstance(outputs, list):
+            outputs = [str(output) for output in outputs]  # Convert list items to strings
+        elif isinstance(outputs, dict):
+            outputs = {key: str(value) for key, value in outputs.items()}  # Simplify dict
+        else:
+            outputs = str(outputs)  # Fallback for other types
 
+        # Debug log the processed outputs
+        print(f"Processed Outputs: {outputs}")
+
+        # Return the processed response
         return jsonify({
             "outputs": outputs,
             "session_id": session_id
         }), 200
+
     except Exception as e:
-        print(f"Error occurred: {e}")  # Debug log
+        # Log any errors for debugging
+        print(f"Error occurred: {e}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -44,5 +61,7 @@ def home():
 
 @app_routes.route("/favicon.ico", methods=["GET"])
 def favicon():
+    """
+    Return 204 for favicon.ico requests.
+    """
     return "", 204  # No Content
-
